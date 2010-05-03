@@ -13,7 +13,7 @@
 	</job>
 
 	<bean id="partitionHandler"
-		class="com.springsource.consulting.batch.gridgain.GridGainPartitionHandler" />
+		class="org.springframework.batch.core.partition.gridgain.GridGainPartitionHandler" />
 
 	<bean id="partitioner"
 		class="org.springframework.batch.core.partition.support.SimplePartitioner" />
@@ -23,11 +23,11 @@
 			<chunk commit-interval="3">
 				<reader>
 					<beans:bean
-						class="com.springsource.consulting.batch.gridgain.ExampleItemReader" />
+						class="org.springframework.batch.core.partition.gridgain.ExampleItemReader" />
 				</reader>
 				<writer>
 					<beans:bean
-						class="com.springsource.consulting.batch.gridgain.ExampleItemWriter" />
+						class="org.springframework.batch.core.partition.gridgain.ExampleItemWriter" />
 				</writer>
 			</chunk>
 		</tasklet>

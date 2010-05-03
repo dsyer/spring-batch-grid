@@ -1,4 +1,4 @@
-package com.springsource.consulting.batch.gridgain;
+package org.springframework.batch.core.partition.gridgain;
 
 import java.io.Serializable;
 import java.util.ArrayList;

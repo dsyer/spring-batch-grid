@@ -26,6 +26,6 @@
 		<property name="dataSource" ref="dataSource" />
 	</bean>
 	
-	<context:property-placeholder system-properties-mode="OVERRIDE" location="classpath:batch-${ENVIRONMENT:hsql}.properties"/>
+	<context:property-placeholder system-properties-mode="OVERRIDE" location="classpath:batch-${ENVIRONMENT:hsql}.properties" order="1"/>
 
 </beans>

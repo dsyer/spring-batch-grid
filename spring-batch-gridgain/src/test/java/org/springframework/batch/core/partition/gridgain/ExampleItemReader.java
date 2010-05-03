@@ -1,4 +1,4 @@
-package com.springsource.consulting.batch.gridgain;
+package org.springframework.batch.core.partition.gridgain;
 
 import org.springframework.batch.item.ItemReader;
 

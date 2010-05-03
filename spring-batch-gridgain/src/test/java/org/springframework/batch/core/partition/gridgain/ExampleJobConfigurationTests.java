@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.springsource.consulting.batch.gridgain;
+package org.springframework.batch.core.partition.gridgain;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ public class ExampleJobConfigurationTests {
 
 	@Test
 	public void testLaunchJob() throws Exception {
-		assertNotNull(jobLauncher.run(job, new JobParameters()));
+		assertNotNull(jobLauncher.run(job, new JobParametersBuilder().addString("run.id", "integration.test").toJobParameters()));
 	}
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.springsource.consulting.batch.gridgain;
+package org.springframework.batch.core.partition.gridgain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.partition.gridgain.RemoteStepExecutor;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.support.SerializationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
