@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.springsource.consulting</groupId>
-	<artifactId>batch.sample.step.gridgain</artifactId>
+	<groupId>org.springframework.batch</groupId>
+	<artifactId>spring-batch-gridgain</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0.0.CI-SNAPSHOT</version>
-	<name>batch.sample.gridgain</name>
-	<url>http://www.springsource.com</url>
+	<name>Spring Batch Gridgain</name>
+	<url>http://www.github.com/dsyer</url>
 	<properties>
 		<maven.test.failure.ignore>true</maven.test.failure.ignore>
 		<spring.framework.version>3.0.2.RELEASE</spring.framework.version>
