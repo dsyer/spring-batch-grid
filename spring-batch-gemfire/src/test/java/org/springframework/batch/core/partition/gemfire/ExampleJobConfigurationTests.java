@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 the original author or authors.
+ * Copyright 2006-2010 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public class ExampleJobConfigurationTests {
 		JobExecution result = jobLauncher.run(job, new JobParametersBuilder().addString("run.id", "integration.test").toJobParameters());
 		assertNotNull(result);
 		assertEquals(BatchStatus.COMPLETED, result.getStatus());
+		assertEquals(3, result.getStepExecutions().size());
 	}
 
 }

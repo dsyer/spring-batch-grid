@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006-2010 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.batch.core.partition.gemfire;
 
 import java.util.Properties;
@@ -35,19 +50,26 @@ public class RegionFactoryBean<K, V> implements FactoryBean<Region<K, V>>, Dispo
 		try {
 
 			cache = CacheFactory.getAnyInstance();
-			return cache.getRegion("/root/" + name);
+			Region<K, V> region = cache.getRegion("/root/" + name);
+			if (region!=null) {
+				return region;
+			}
 
 		} catch (CacheClosedException e) {
 
 			distributedSystem = DistributedSystem.connect(new Properties());
 			cache = CacheFactory.create(distributedSystem);
-			Region<K, V> root = cache.createRegion("root", new AttributesFactory<K, V>().create());
-			AttributesFactory<K, V> attributesFactory = new AttributesFactory<K, V>(root.getAttributes());
-			attributesFactory.setDataPolicy(DataPolicy.PARTITION);
-
-			return root.createSubregion(name, attributesFactory.create());
 
 		}
+
+		Region<K, V> root = cache.getRegion("/root");
+		if (root==null) {
+			root = cache.createRegion("root", new AttributesFactory<K, V>().create());
+		}
+		AttributesFactory<K, V> attributesFactory = new AttributesFactory<K, V>(root.getAttributes());
+		attributesFactory.setDataPolicy(DataPolicy.PARTITION);
+
+		return root.createSubregion(name, attributesFactory.create());
 
 	}
 

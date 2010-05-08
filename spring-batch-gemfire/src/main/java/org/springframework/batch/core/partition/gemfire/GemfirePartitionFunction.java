@@ -1,9 +1,21 @@
+/*
+ * Copyright 2006-2010 the original author or authors.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.springframework.batch.core.partition.gemfire;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,6 +32,13 @@ import com.gemstone.gemfire.cache.execute.RegionFunctionContext;
 import com.gemstone.gemfire.cache.execute.ResultSender;
 import com.gemstone.gemfire.cache.partition.PartitionRegionHelper;
 
+/**
+ * A serializable function that can execute a step as part of a partition execution. Used internally by the
+ * {@link GemfirePartitionHandler}.
+ * 
+ * @author Dave Syer
+ * 
+ */
 public class GemfirePartitionFunction extends FunctionAdapter {
 
 	private static Log logger = LogFactory.getLog(GemfirePartitionFunction.class);
@@ -55,8 +74,7 @@ public class GemfirePartitionFunction extends FunctionAdapter {
 	private StepExecution execute(StepExecution stepExecution) {
 		try {
 			getStep().execute(stepExecution);
-		}
-		catch (JobInterruptedException e) {
+		} catch (JobInterruptedException e) {
 			stepExecution.getJobExecution().setStatus(BatchStatus.STOPPING);
 			throw new UnexpectedJobExecutionException("TODO: this should result in a stop", e);
 		}
@@ -64,18 +82,25 @@ public class GemfirePartitionFunction extends FunctionAdapter {
 	}
 
 	private List<StepExecution> extract(RegionFunctionContext context) {
+
 		Map<String, StepExecution> data = PartitionRegionHelper.getLocalDataForContext(context);
-		List<StepExecution> list = new ArrayList<StepExecution>();
-		for (Entry<String, StepExecution> entry : data.entrySet()) {
-			logger.debug("Extract:" + entry);
-			list.add(entry.getValue());
+		@SuppressWarnings("unchecked")
+		Set<String> keys = (Set<String>) context.getFilter();
+
+		List<StepExecution> result = new ArrayList<StepExecution>();
+
+		for (String key : keys) {
+			logger.debug("Extract:" + key);
+			result.add(data.get(key));
 		}
-		return list;
+
+		return result;
+
 	}
 
 	@Override
 	public String getId() {
-		return getClass().getSimpleName();
+		return getClass().getSimpleName() + ":" + stepName;
 	}
 
 	private Step getStep() {

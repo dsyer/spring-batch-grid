@@ -1,19 +1,45 @@
+/*
+ * Copyright 2006-2010 the original author or authors.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package org.springframework.batch.core.partition.gemfire;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.partition.PartitionHandler;
 import org.springframework.batch.core.partition.StepExecutionSplitter;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.io.Resource;
+import org.springframework.util.Assert;
 
 import com.gemstone.gemfire.cache.Region;
 import com.gemstone.gemfire.cache.execute.Execution;
 import com.gemstone.gemfire.cache.execute.FunctionService;
 import com.gemstone.gemfire.cache.execute.ResultCollector;
 
-public class GemfirePartitionHandler implements PartitionHandler {
+/**
+ * Main entry and configuration point for users of Gemfire as a partitioned step execution grid. Configure one of these
+ * as the partition handler in a partitioned step and make sure that the Gemfire jars are on the classpath (and in the
+ * distribution lib directory).
+ * 
+ * @author Dave Syer
+ * 
+ */
+public class GemfirePartitionHandler implements PartitionHandler, InitializingBean {
 
 	private int gridSize = 1;
 
@@ -22,42 +48,93 @@ public class GemfirePartitionHandler implements PartitionHandler {
 	private String configLocation;
 
 	private String stepName;
-	
+
+	/**
+	 * Storage area and transport for step execution requests in the distributed system.
+	 * 
+	 * @param region a partitioned Region
+	 */
 	public void setRegion(Region<String, StepExecution> region) {
 		this.region = region;
 	}
 
+	/**
+	 * Location of some Spring XML configuration that contains a {@link Step} definition with the
+	 * {@link #setStepName(String) name} provided.
+	 * 
+	 * @param configLocation a Spring {@link Resource} path to an XML configuration file
+	 */
 	public void setConfigLocation(String configLocation) {
 		this.configLocation = configLocation;
 	}
-	
+
+	/**
+	 * The name of the {@link Step} configured in the application context defined at {@link #setConfigLocation(String)
+	 * config location}.
+	 * 
+	 * @param stepName
+	 */
 	public void setStepName(String stepName) {
 		this.stepName = stepName;
 	}
-	
+
+	/**
+	 * The number of step executions to create per step execution. Can but does not have to be the same as the physical
+	 * grid size (number of nodes). Setting to a multiple of the physical grid size has some advantages regarding load
+	 * balancing if the partitioned step executions are not of uniform duration.
+	 * 
+	 * @param gridSize the grid size to set
+	 */
 	public void setGridSize(int gridSize) {
 		this.gridSize = gridSize;
 	}
 
+	/**
+	 * Check mandatory properties (region, step name, config location).
+	 */
+	public void afterPropertiesSet() throws Exception {
+		Assert.state(region != null, "A Region must be provided");
+		Assert.state(configLocation != null, "A config location must be provided");
+		Assert.state(stepName != null, "A Step name must be provided");
+	}
+
+	/**
+	 * Handles the task generation, distribution and result collation for a partitioned step execution in a Gemfire
+	 * distributed system. For each partitioned execution puts an entry in the cache region provided, and removes all
+	 * entries after the step has finished.
+	 * 
+	 * @see PartitionHandler#handle(StepExecutionSplitter, StepExecution)
+	 */
 	public Collection<StepExecution> handle(StepExecutionSplitter stepSplitter, StepExecution masterStepExecution)
 			throws Exception {
 
 		Set<StepExecution> split = stepSplitter.split(masterStepExecution, gridSize);
-		for (StepExecution stepExecution : split) {
-			region.put(stepExecution.getStepName(), stepExecution);
-		}
-		
-		Execution execution = FunctionService.onRegion(region);
-		ResultCollector<? extends Serializable> collector = execution.execute(new GemfirePartitionFunction(configLocation, stepName));
-
-		@SuppressWarnings("unchecked")
-		Collection<StepExecution> result = (Collection<StepExecution>) collector.getResult();
+		String prefix = UUID.randomUUID().toString();
+		Set<String> keys = new HashSet<String>();
 
 		for (StepExecution stepExecution : split) {
-			region.remove(stepExecution.getStepName());
+			String key = prefix + ":" + stepExecution.getStepName();
+			region.put(key, stepExecution);
+			keys.add(key);
 		}
 
-		return result;
+		try {
+
+			Execution execution = FunctionService.onRegion(region).withFilter(keys);
+			ResultCollector<? extends Serializable> collector = execution.execute(new GemfirePartitionFunction(
+					configLocation, stepName));
+
+			@SuppressWarnings("unchecked")
+			Collection<StepExecution> result = (Collection<StepExecution>) collector.getResult();
+			return result;
+
+		} finally {
+
+			for (String key : keys) {
+				region.remove(key);
+			}
+
+		}
 
 	}
 
