@@ -17,13 +17,13 @@ public class GemfirePartitionHandler implements PartitionHandler {
 
 	private int gridSize = 1;
 
-	private Region<String, RemoteStepExecutor> region;
+	private Region<String, StepExecution> region;
 
 	private String configLocation;
 
 	private String stepName;
 	
-	public void setRegion(Region<String, RemoteStepExecutor> region) {
+	public void setRegion(Region<String, StepExecution> region) {
 		this.region = region;
 	}
 
@@ -44,11 +44,11 @@ public class GemfirePartitionHandler implements PartitionHandler {
 
 		Set<StepExecution> split = stepSplitter.split(masterStepExecution, gridSize);
 		for (StepExecution stepExecution : split) {
-			region.put(stepExecution.getStepName(), new RemoteStepExecutor(configLocation, stepName, stepExecution));
+			region.put(stepExecution.getStepName(), stepExecution);
 		}
 		
 		Execution execution = FunctionService.onRegion(region);
-		ResultCollector<? extends Serializable> collector = execution.execute(new GemfirePartitionFunction());
+		ResultCollector<? extends Serializable> collector = execution.execute(new GemfirePartitionFunction(configLocation, stepName));
 
 		@SuppressWarnings("unchecked")
 		Collection<StepExecution> result = (Collection<StepExecution>) collector.getResult();
