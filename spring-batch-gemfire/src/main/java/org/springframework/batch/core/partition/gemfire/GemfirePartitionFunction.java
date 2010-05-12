@@ -24,7 +24,6 @@ import org.springframework.batch.core.JobInterruptedException;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.UnexpectedJobExecutionException;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.gemstone.gemfire.cache.execute.FunctionAdapter;
 import com.gemstone.gemfire.cache.execute.FunctionContext;
@@ -43,15 +42,10 @@ public class GemfirePartitionFunction extends FunctionAdapter {
 
 	private static Log logger = LogFactory.getLog(GemfirePartitionFunction.class);
 
-	private String configLocation;
+	private final Step step;
 
-	private String stepName;
-
-	private Step step;
-
-	public GemfirePartitionFunction(String configLocation, String stepName) {
-		this.configLocation = configLocation;
-		this.stepName = stepName;
+	public GemfirePartitionFunction(Step step) {
+		this.step = step;
 	}
 
 	@Override
@@ -73,7 +67,7 @@ public class GemfirePartitionFunction extends FunctionAdapter {
 
 	private StepExecution execute(StepExecution stepExecution) {
 		try {
-			getStep().execute(stepExecution);
+			step.execute(stepExecution);
 		} catch (JobInterruptedException e) {
 			stepExecution.getJobExecution().setStatus(BatchStatus.STOPPING);
 			throw new UnexpectedJobExecutionException("TODO: this should result in a stop", e);
@@ -100,18 +94,7 @@ public class GemfirePartitionFunction extends FunctionAdapter {
 
 	@Override
 	public String getId() {
-		return getClass().getSimpleName() + ":" + stepName;
-	}
-
-	private Step getStep() {
-		if (step == null) {
-			synchronized (configLocation) {
-				if (step == null) {
-					step = (Step) new ClassPathXmlApplicationContext(configLocation).getBean(stepName, Step.class);
-				}
-			}
-		}
-		return step;
+		return getClass().getSimpleName() + ":" + step.getName();
 	}
 
 }
