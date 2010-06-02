@@ -1,3 +1,6 @@
 [submodule "spring-batch-gridgain"]
 	path = spring-batch-gridgain
 	url = ../spring-batch-gridgain
+[submodule "spring-batch-gemfire"]
+	path = spring-batch-gemfire
+	url = ../spring-batch-gemfire
