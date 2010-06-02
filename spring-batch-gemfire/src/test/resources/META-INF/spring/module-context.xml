@@ -13,32 +13,32 @@
 
 	<bean id="partitionHandler"
 		class="org.springframework.batch.core.partition.gemfire.GemfirePartitionHandler">
-		<property name="region" ref="region"/>
-		<property name="gridSize" value="2"/>
-		<property name="stepName" value="step"/>
-		<property name="configLocation" value="classpath:/launch-context.xml"/>
-	</bean>
-	
-	<bean id="region" class="org.springframework.batch.core.partition.gemfire.RegionFactoryBean">
-		<property name="name" value="step"/>
+		<property name="region" ref="region" />
+		<property name="gridSize" value="2" />
+		<property name="step" ref="step" />
 	</bean>
 
 	<bean id="partitioner"
 		class="org.springframework.batch.core.partition.support.SimplePartitioner" />
 
-	<step id="step" xmlns="http://www.springframework.org/schema/batch">
-		<tasklet>
-			<chunk commit-interval="3">
-				<reader>
-					<beans:bean
-						class="org.springframework.batch.core.partition.gemfire.ExampleItemReader" />
-				</reader>
-				<writer>
-					<beans:bean
-						class="org.springframework.batch.core.partition.gemfire.ExampleItemWriter" />
-				</writer>
-			</chunk>
-		</tasklet>
-	</step>
+	<bean id="region"
+		class="org.springframework.batch.core.partition.gemfire.RegionFactoryBean">
+		<property name="name" value="step" />
+	</bean>
+
+	<bean id="step"
+		class="org.springframework.batch.core.step.item.SimpleStepFactoryBean"
+		scope="remote">
+		<property name="itemReader">
+			<bean
+				class="org.springframework.batch.core.partition.gemfire.ExampleItemReader" />
+		</property>
+		<property name="itemWriter">
+			<bean
+				class="org.springframework.batch.core.partition.gemfire.ExampleItemWriter" />
+		</property>
+		<property name="transactionManager" ref="transactionManager"/>
+		<property name="jobRepository" ref="jobRepository"/>
+	</bean>
 
 </beans>

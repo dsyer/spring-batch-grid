@@ -23,7 +23,6 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.partition.PartitionHandler;
 import org.springframework.batch.core.partition.StepExecutionSplitter;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
 
 import com.gemstone.gemfire.cache.Region;
@@ -45,9 +44,7 @@ public class GemfirePartitionHandler implements PartitionHandler, InitializingBe
 
 	private Region<String, StepExecution> region;
 
-	private String configLocation;
-
-	private String stepName;
+	private Step step;
 
 	/**
 	 * Storage area and transport for step execution requests in the distributed system.
@@ -59,23 +56,10 @@ public class GemfirePartitionHandler implements PartitionHandler, InitializingBe
 	}
 
 	/**
-	 * Location of some Spring XML configuration that contains a {@link Step} definition with the
-	 * {@link #setStepName(String) name} provided.
-	 * 
-	 * @param configLocation a Spring {@link Resource} path to an XML configuration file
+	 * @param step the step to set
 	 */
-	public void setConfigLocation(String configLocation) {
-		this.configLocation = configLocation;
-	}
-
-	/**
-	 * The name of the {@link Step} configured in the application context defined at {@link #setConfigLocation(String)
-	 * config location}.
-	 * 
-	 * @param stepName
-	 */
-	public void setStepName(String stepName) {
-		this.stepName = stepName;
+	public void setStep(Step step) {
+		this.step = step;
 	}
 
 	/**
@@ -94,8 +78,7 @@ public class GemfirePartitionHandler implements PartitionHandler, InitializingBe
 	 */
 	public void afterPropertiesSet() throws Exception {
 		Assert.state(region != null, "A Region must be provided");
-		Assert.state(configLocation != null, "A config location must be provided");
-		Assert.state(stepName != null, "A Step name must be provided");
+		Assert.state(step != null, "A step must be provided");
 	}
 
 	/**
@@ -121,8 +104,7 @@ public class GemfirePartitionHandler implements PartitionHandler, InitializingBe
 		try {
 
 			Execution execution = FunctionService.onRegion(region).withFilter(keys);
-			ResultCollector<? extends Serializable> collector = execution.execute(new GemfirePartitionFunction(
-					configLocation, stepName));
+			ResultCollector<? extends Serializable> collector = execution.execute(new GemfirePartitionFunction(step));
 
 			@SuppressWarnings("unchecked")
 			Collection<StepExecution> result = (Collection<StepExecution>) collector.getResult();
