@@ -1,0 +1,3 @@
+[submodule "spring-batch-gridgain"]
+	path = spring-batch-gridgain
+	url = ../spring-batch-gridgain
