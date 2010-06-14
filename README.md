@@ -1,6 +1,6 @@
 # Spring Batch Grid #
 
-Aggregator for various other projects that provide grid features in Spring Batch (which might have independent release cycles).
+Aggregator for various other projects that provide grid features in Spring Batch (which might have independent release cycles).  Some of the submodules might be work in progress, while others are more mature.  If you are mainly interested in a particular grid provider, go straight to that module in its own repository.
 
 To build, clone from git and then
 
